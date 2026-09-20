@@ -6,6 +6,10 @@ from fastapi import FastAPI
 from app.schemas import CustomerData
 
 
+mlflow.set_tracking_uri(
+    "sqlite:///C:/Users/sande/OneDrive/Desktop/Telco-Customer-Churn-model/notebooks/mlflow.db"
+)
+
 app = FastAPI(
     title="Telco Customer Churn Prediction API",
     description="Production-style API for predicting customer churn.",
@@ -17,7 +21,7 @@ app = FastAPI(
 # MLflow Model
 # -----------------------------
 
-RUN_ID = "baeaa2c3b50d469fb715a2637fb6f642"
+RUN_ID = "19e46fd5801c442997d747c9e6bed9f6"   #Your RUN_ID here
 
 MODEL_URI = f"runs:/{RUN_ID}/telco_churn_model"
 
