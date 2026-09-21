@@ -1,12 +1,12 @@
-from http.client import HTTPException
 from pathlib import Path
-import mlflow
-import mlflow.sklearn
-import pandas as pd
 import logging
+import os
+import pandas as pd
+import skops.io as sio
 
-from fastapi import FastAPI
-from app.schemas import CustomerData ,   PredictionResponse
+from fastapi import FastAPI, HTTPException
+from app.schemas import CustomerData, PredictionResponse
+
 
 logging.basicConfig(
     level=logging.INFO
@@ -14,9 +14,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-mlflow.set_tracking_uri(
-    "sqlite:///C:/Users/sande/OneDrive/Desktop/Telco-Customer-Churn-model/notebooks/mlflow.db"
-)
 
 app = FastAPI(
     title="Telco Customer Churn Prediction API",
@@ -32,11 +29,26 @@ app = FastAPI(
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 MODEL_PATH = BASE_DIR / "model"
+MODEL_FILE = MODEL_PATH / "model.skops"
 
-model = mlflow.sklearn.load_model(MODEL_PATH)
 
-THRESHOLD = 0.35
+model = sio.load(
+    MODEL_FILE,
+    trusted=[
+        "numpy.dtype",
+        "sklearn.compose._column_transformer._RemainderColsList",
+        "sklearn.tree._tree.Tree",
+        "_loss.CyHalfBinomialLoss"
+    ]
+)
 
+
+THRESHOLD = float(os.getenv("CHURN_THRESHOLD", "0.35"))
+
+
+# -----------------------------
+# Routes
+# -----------------------------
 
 @app.get("/")
 def home():
@@ -104,7 +116,7 @@ def predict(customer: CustomerData):
             "threshold": THRESHOLD
         }
 
-    except Exception as e:
+    except Exception:
 
         logger.exception(
             "Error while generating churn prediction"
