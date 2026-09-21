@@ -5,22 +5,41 @@ from pydantic import BaseModel, Field
 
 class CustomerData(BaseModel):
 
-    Gender: Literal["Male", "Female"]
+    Gender: Literal[
+        "Female",
+        "Male"
+    ]
 
-    Senior_Citizen: Literal["Yes", "No"]
+    Senior_Citizen: Literal[
+        "No",
+        "Yes"
+    ]
 
-    Partner: Literal["Yes", "No"]
+    Partner: Literal[
+        "No",
+        "Yes"
+    ]
 
-    Dependents: Literal["Yes", "No"]
+    Dependents: Literal[
+        "No",
+        "Yes"
+    ]
 
     Tenure_Months: float = Field(
         ge=0,
         le=72
     )
 
-    Phone_Service: Literal["Yes", "No"]
+    Phone_Service: Literal[
+        "No",
+        "Yes"
+    ]
 
-    Multiple_Lines: str
+    Multiple_Lines: Literal[
+        "No",
+        "No phone service",
+        "Yes"
+    ]
 
     Internet_Service: Literal[
         "DSL",
@@ -28,13 +47,41 @@ class CustomerData(BaseModel):
         "No"
     ]
 
-    Online_Security: str
-    Online_Backup: str
-    Device_Protection: str
-    Tech_Support: str
+    Online_Security: Literal[
+        "No",
+        "No internet service",
+        "Yes"
+    ]
 
-    Streaming_TV: str
-    Streaming_Movies: str
+    Online_Backup: Literal[
+        "No",
+        "No internet service",
+        "Yes"
+    ]
+
+    Device_Protection: Literal[
+        "No",
+        "No internet service",
+        "Yes"
+    ]
+
+    Tech_Support: Literal[
+        "No",
+        "No internet service",
+        "Yes"
+    ]
+
+    Streaming_TV: Literal[
+        "No",
+        "No internet service",
+        "Yes"
+    ]
+
+    Streaming_Movies: Literal[
+        "No",
+        "No internet service",
+        "Yes"
+    ]
 
     Contract: Literal[
         "Month-to-month",
@@ -42,9 +89,17 @@ class CustomerData(BaseModel):
         "Two year"
     ]
 
-    Paperless_Billing: Literal["Yes", "No"]
+    Paperless_Billing: Literal[
+        "No",
+        "Yes"
+    ]
 
-    Payment_Method: str
+    Payment_Method: Literal[
+        "Bank transfer (automatic)",
+        "Credit card (automatic)",
+        "Electronic check",
+        "Mailed check"
+    ]
 
     Monthly_Charges: float = Field(
         ge=0

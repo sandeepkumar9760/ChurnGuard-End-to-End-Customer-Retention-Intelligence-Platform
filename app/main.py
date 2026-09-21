@@ -21,7 +21,7 @@ app = FastAPI(
 # MLflow Model
 # -----------------------------
 
-RUN_ID = "19e46fd5801c442997d747c9e6bed9f6"   #Your RUN_ID here
+RUN_ID = "2fe877028f9546c486abb5af4dd9163d"   #Your RUN_ID here
 
 MODEL_URI = f"runs:/{RUN_ID}/telco_churn_model"
 

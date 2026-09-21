@@ -1,0 +1,26 @@
+artifact_path: file:c:/Users/sande/OneDrive/Desktop/Telco-Customer-Churn-model/notebooks/mlruns/1/models/m-ef44018340ea41558e951c68d2465589/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.5
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.6.1
+    skops_trusted_types:
+    - numpy.dtype
+    - sklearn.compose._column_transformer._RemainderColsList
+    - sklearn.tree._tree.Tree
+mlflow_version: 3.16.1
+model_id: m-ef44018340ea41558e951c68d2465589
+model_size_bytes: 3575557
+model_uuid: m-ef44018340ea41558e951c68d2465589
+prompts: null
+run_id: 2fe877028f9546c486abb5af4dd9163d
+utc_time_created: '2026-09-21 06:06:56.292722'
