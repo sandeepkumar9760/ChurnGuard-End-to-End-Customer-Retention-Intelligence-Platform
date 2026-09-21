@@ -1,14 +1,25 @@
 # 🛡️ ChurnGuard — End-to-End Customer Retention Intelligence Platform
 
-> An end-to-end machine learning and API platform for telecom churn prediction, model explainability, experiment tracking, and containerized inference.
+> An end-to-end machine learning and API platform for telecom churn prediction, model explainability, experiment tracking, containerized inference, automated testing, and cloud deployment.
 
-[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.13.5-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.141.1-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.6.1-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![MLflow](https://img.shields.io/badge/MLflow-3.16.1-0194E2?logo=mlflow&logoColor=white)](https://mlflow.org/)
 [![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render&logoColor=white)](https://render.com/)
 [![Skops](https://img.shields.io/badge/Model%20Serialization-Skops-purple)](https://skops.readthedocs.io/)
 [![Pytest](https://img.shields.io/badge/Tests-Pytest-0A9EDC?logo=pytest&logoColor=white)](https://pytest.org/)
+
+## 🚀 Live Deployment
+
+**Production API:** https://churnguard-api-mqod.onrender.com/
+
+**Interactive Swagger documentation:** https://churnguard-api-mqod.onrender.com/docs
+
+**Health check:** https://churnguard-api-mqod.onrender.com/health
+
+The production service is deployed as a Render Web Service and loads the versioned `model/model.skops` artifact directly at application startup.
 
 ---
 
@@ -18,13 +29,15 @@
 
 The project takes telecom customer data through the complete ML lifecycle:
 
-**Data → EDA → Preprocessing → Model Comparison → Hyperparameter Tuning → Threshold Optimization → SHAP Explainability → MLflow Tracking → Model Serialization → FastAPI → Docker → Integration Testing**
+**Data → EDA → Preprocessing → Model Comparison → Hyperparameter Tuning → Threshold Evaluation → SHAP Explainability → MLflow Tracking → Model Serialization → FastAPI → Docker → Automated Testing → Render Deployment**
 
 The inference service exposes a validated HTTP API that returns both a churn probability and a binary decision based on a configurable classification threshold.
 
+> The model is a predictive risk signal. It does not establish causal relationships and is not an automated retention-decision system.
+
 ---
 
-## 💼 Business Problem
+# 💼 Business Problem
 
 Customer churn is a major business challenge in the telecom industry. ChurnGuard estimates whether a customer's historical profile resembles customers who churned.
 
@@ -34,12 +47,10 @@ Customer churn is a major business challenge in the telecom industry. ChurnGuard
 
 ### API output
 
-- **Churn probability**
-- **Binary churn prediction**
-- **Churn label**
-- **Decision threshold**
-
-> The model is a predictive risk signal. It does not establish causal relationships and is not an automated retention-decision system.
+- Churn probability
+- Binary churn prediction
+- Churn label
+- Decision threshold
 
 ---
 
@@ -83,7 +94,7 @@ Customer churn is a major business challenge in the telecom industry. ChurnGuard
                                       │
                                       ▼
                          ┌──────────────────────────┐
-                         │ Threshold Optimization   │
+                         │ Threshold Evaluation     │
                          └────────────┬─────────────┘
                                       │
                                       ▼
@@ -105,20 +116,13 @@ Customer churn is a major business challenge in the telecom industry. ChurnGuard
                                       ▼
                   ┌─────────────────────────────────────────┐
                   │              FastAPI Service             │
-                  │                                         │
-                  │  GET  /                                 │
-                  │  GET  /health                           │
-                  │  POST /predict                          │
+                  │  GET /  |  GET /health  |  POST /predict│
                   └────────────────────┬────────────────────┘
                                        │
-                                       ▼
-                         ┌──────────────────────────┐
-                         │ Docker Container         │
-                         │                          │
-                         │ Healthcheck              │
-                         │ Pinned Dependencies      │
-                         │ Environment Config       │
-                         └──────────────────────────┘
+                         ┌─────────────▼──────────────┐
+                         │ Docker / Render Deployment │
+                         │ Health Check + HTTPS       │
+                         └────────────────────────────┘
 ```
 
 ---
@@ -144,14 +148,12 @@ Approximate target distribution:
 ### Feature groups
 
 **Customer profile**
-
 - Gender
 - Senior Citizen
 - Partner
 - Dependents
 
 **Services**
-
 - Phone Service
 - Multiple Lines
 - Internet Service
@@ -163,7 +165,6 @@ Approximate target distribution:
 - Streaming Movies
 
 **Contract & billing**
-
 - Contract
 - Paperless Billing
 - Payment Method
@@ -171,7 +172,6 @@ Approximate target distribution:
 - Total Charges
 
 **Relationship**
-
 - Tenure Months
 
 ---
@@ -215,9 +215,9 @@ The EDA also found higher observed churn among month-to-month customers across t
 
 # 🧪 Feature Selection
 
-The baseline model uses 19 features.
+The baseline model uses **19 features**.
 
-The following fields were excluded from the baseline:
+Excluded from the baseline:
 
 ```text
 CustomerID
@@ -285,7 +285,7 @@ categorical_pipeline = Pipeline([
 ])
 ```
 
-Preprocessing is bundled into the trained pipeline so that training and inference use the same transformations.
+Preprocessing is bundled into the trained pipeline so training and inference use the same transformations.
 
 ---
 
@@ -314,7 +314,7 @@ Five-fold stratified cross-validation on the training set:
 | Random Forest | — | — | — | — | 0.833 | 0.624 |
 | Gradient Boosting | 0.808 | 0.674 | 0.539 | 0.599 | **0.864** | **0.689** |
 
-Gradient Boosting was selected for further tuning based on the cross-validation results for the ranking metrics used in this project.
+Gradient Boosting was selected for further tuning based on the cross-validation ranking metrics used in this project.
 
 ---
 
@@ -342,7 +342,7 @@ Test ROC-AUC    : 0.8549
 
 ---
 
-# 🎚️ Classification Threshold Optimization
+# 🎚️ Classification Threshold
 
 The default threshold of `0.50` was not assumed to be optimal.
 
@@ -368,7 +368,7 @@ The threshold is configurable through:
 CHURN_THRESHOLD=0.35
 ```
 
-This makes the decision threshold a deployment/business parameter rather than a hard-coded model property.
+Threshold selection is a deployment/business parameter and should be revisited when intervention costs, capacity, or class prevalence change.
 
 ---
 
@@ -408,9 +408,7 @@ Tech Support_No
 
 # 📌 MLflow Experiment Tracking
 
-MLflow was used to track the model development lifecycle.
-
-Tracked information includes:
+MLflow was used during model development to track:
 
 - model type
 - hyperparameters
@@ -419,26 +417,30 @@ Tracked information includes:
 - classification threshold
 - trained model artifact
 
-The production service loads the serialized model directly and does not require the MLflow tracking database at inference time.
+The production service loads the serialized model directly and does **not** require the MLflow tracking database at inference time.
 
 ---
 
 # 📦 Model Serialization
 
-The final model is stored as a Skops artifact:
+The final model is stored as:
 
 ```text
 model/
 └── model.skops
 ```
 
-The artifact was trained with:
+The artifact uses:
 
 ```text
 scikit-learn==1.6.1
+numpy==2.1.3
+pandas==2.2.3
+scipy==1.15.3
+skops==0.15.0
 ```
 
-The production environment pins the same Scikit-learn version to maintain compatibility with the serialized model.
+The production environment pins these core ML dependencies to maintain compatibility with the serialized artifact.
 
 ---
 
@@ -448,13 +450,13 @@ The model is exposed through FastAPI with Pydantic request validation.
 
 ## Endpoints
 
-### `GET /`
-
-Returns a basic API status message.
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/` | API status |
+| GET | `/health` | Application/model health |
+| POST | `/predict` | Churn prediction |
 
 ### `GET /health`
-
-Returns application and model health.
 
 Example:
 
@@ -472,6 +474,8 @@ Accepts customer attributes and returns churn probability and classification.
 ---
 
 # 📨 Prediction Example
+
+The API schema uses Python-style field names for JSON requests.
 
 ### Request
 
@@ -499,7 +503,7 @@ Accepts customer attributes and returns churn probability and classification.
 }
 ```
 
-### Response
+### Response shape
 
 ```json
 {
@@ -510,31 +514,39 @@ Accepts customer attributes and returns churn probability and classification.
 }
 ```
 
+The exact probability depends on the supplied customer features.
+
 ---
 
-# ✅ Validation
+# 🌐 Production Deployment
 
-Pydantic validates categorical and numerical inputs before prediction.
+ChurnGuard is deployed on **Render** as a Python Web Service.
 
-### Contract values
-
-```text
-Month-to-month
-One year
-Two year
-```
-
-### Numerical constraints
-
-- `0 <= Tenure_Months <= 72`
-- `Monthly_Charges >= 0`
-- `Total_Charges >= 0`
-
-Invalid requests return:
+### Production configuration
 
 ```text
-HTTP 422 Unprocessable Entity
+Build:
+pip install -r requirements.txt
+
+Start:
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+Health Check:
+/health
+
+Environment:
+CHURN_THRESHOLD=0.35
 ```
+
+### Production API
+
+**Base URL:** https://churnguard-api-mqod.onrender.com/
+
+**Swagger:** https://churnguard-api-mqod.onrender.com/docs
+
+**Health:** https://churnguard-api-mqod.onrender.com/health
+
+Render automatically rebuilds the service from the connected GitHub `main` branch when new commits are pushed.
 
 ---
 
@@ -568,42 +580,13 @@ docker run -d \
     telco-churn-api
 ```
 
-Check the container:
-
-```bash
-docker ps
-```
-
-Expected status:
-
-```text
-Up ... (healthy)
-```
-
----
-
-# ❤️ Docker Healthcheck
-
-The Docker image performs a healthcheck against:
-
-```text
-GET /health
-```
-
-Configuration:
-
-```dockerfile
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
-```
-
-This verifies that the API is responding inside the running container.
+The Docker image includes a healthcheck against `GET /health`.
 
 ---
 
 # 🧪 Testing
 
-The repository contains both application-level and container-level tests.
+The repository contains **9 automated tests** across application and container-level test suites.
 
 ### Application tests
 
@@ -611,14 +594,15 @@ The repository contains both application-level and container-level tests.
 tests/test_api.py
 ```
 
-These cover:
+Coverage includes:
 
 - health endpoint
 - root endpoint
 - valid prediction
 - invalid payment method
 - invalid contract
-- invalid numerical values
+- negative monthly charges
+- negative total charges
 
 Run:
 
@@ -632,7 +616,7 @@ pytest tests/test_api.py -v
 tests/test_container_api.py
 ```
 
-These tests send real HTTP requests to the running Docker container and validate:
+These send real HTTP requests to the running Docker container and validate:
 
 - health status
 - prediction endpoint
@@ -647,6 +631,12 @@ Run:
 pytest tests/test_container_api.py -v
 ```
 
+### Current validation status
+
+```text
+9 / 9 tests passing
+```
+
 ---
 
 # 📁 Project Structure
@@ -658,8 +648,6 @@ ChurnGuard-End-to-End-Customer-Retention-Intelligence-Platform/
 │   ├── __init__.py
 │   ├── main.py
 │   └── schemas.py
-│
-├── data/
 │
 ├── model/
 │   ├── MLmodel
@@ -678,6 +666,8 @@ ChurnGuard-End-to-End-Customer-Retention-Intelligence-Platform/
 │   └── test_container_api.py
 │
 ├── .dockerignore
+├── .gitignore
+├── .python-version
 ├── Dockerfile
 ├── requirements.txt
 └── README.md
@@ -689,17 +679,18 @@ ChurnGuard-End-to-End-Customer-Retention-Intelligence-Platform/
 
 | Layer | Technology |
 |---|---|
-| Language | Python 3.12 |
-| Data Processing | Pandas, NumPy |
+| Language | Python 3.13.5 |
+| Data Processing | Pandas 2.2.3, NumPy 2.1.3 |
 | Machine Learning | Scikit-learn 1.6.1 |
 | Explainability | SHAP |
-| Experiment Tracking | MLflow |
-| Model Serialization | Skops |
-| API | FastAPI |
-| Validation | Pydantic |
-| Server | Uvicorn |
-| Testing | Pytest, Requests |
+| Experiment Tracking | MLflow 3.16.1 |
+| Model Serialization | Skops 0.15.0 |
+| API | FastAPI 0.141.1 |
+| Validation | Pydantic 2.13.5 |
+| Server | Uvicorn 0.53.0 |
+| Testing | Pytest |
 | Containerization | Docker |
+| Cloud Deployment | Render |
 
 ---
 
@@ -739,6 +730,8 @@ Docker
 Healthcheck
  ↓
 Integration Tests
+ ↓
+Render Deployment
 ```
 
 ---
@@ -749,13 +742,9 @@ A key deployment issue encountered during development was model/runtime compatib
 
 The serialized model was created with **Scikit-learn 1.6.1**. Loading the artifact with a different Scikit-learn version caused deserialization incompatibility.
 
-The production environment therefore pins:
+The production environment therefore pins the core model-serving dependencies.
 
-```text
-scikit-learn==1.6.1
-```
-
-The API also loads the local `model.skops` artifact directly rather than requiring the original Windows-specific MLflow tracking path.
+The API loads the local `model/model.skops` artifact directly rather than requiring the original Windows-specific MLflow tracking path.
 
 ---
 
@@ -771,14 +760,14 @@ Considerations include:
 - production deployments require model and data monitoring
 - customer-level data should be handled according to applicable privacy and governance requirements
 - automated retraining and model promotion are not yet implemented
+- the current API does not include authentication or rate limiting
 
 ---
 
 # 🚧 Future Roadmap
 
 - [ ] GitHub Actions CI/CD
-- [ ] Cloud deployment
-- [ ] Model registry and automated promotion
+- [ ] Automated model registry and promotion
 - [ ] Data drift monitoring
 - [ ] Model performance monitoring
 - [ ] Prediction logging
@@ -816,18 +805,19 @@ B.Tech CSE — Decision Science & Machine Learning
 - Multiple-model evaluation
 - 5-fold stratified cross-validation
 - Gradient Boosting hyperparameter optimization
-- Decision-threshold optimization
+- Decision-threshold evaluation
 - SHAP explainability
 - MLflow experiment tracking
 - Portable Skops model artifact
 - FastAPI inference service
 - Pydantic validation
 - Docker containerization
+- Render production deployment
 - Pinned model-serving dependencies
 - Docker healthcheck
 - Environment-based threshold configuration
-- Application-level API tests
-- Docker container integration tests
+- 9 automated tests
+- Container integration testing
 
 ---
 
