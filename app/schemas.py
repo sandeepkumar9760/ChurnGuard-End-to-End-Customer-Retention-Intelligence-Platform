@@ -1,18 +1,32 @@
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class CustomerData(BaseModel):
 
-    Gender: str
-    Senior_Citizen: str
-    Partner: str
-    Dependents: str
+    Gender: Literal["Male", "Female"]
 
-    Tenure_Months: float
+    Senior_Citizen: Literal["Yes", "No"]
 
-    Phone_Service: str
+    Partner: Literal["Yes", "No"]
+
+    Dependents: Literal["Yes", "No"]
+
+    Tenure_Months: float = Field(
+        ge=0,
+        le=72
+    )
+
+    Phone_Service: Literal["Yes", "No"]
+
     Multiple_Lines: str
-    Internet_Service: str
+
+    Internet_Service: Literal[
+        "DSL",
+        "Fiber optic",
+        "No"
+    ]
 
     Online_Security: str
     Online_Backup: str
@@ -22,9 +36,20 @@ class CustomerData(BaseModel):
     Streaming_TV: str
     Streaming_Movies: str
 
-    Contract: str
-    Paperless_Billing: str
+    Contract: Literal[
+        "Month-to-month",
+        "One year",
+        "Two year"
+    ]
+
+    Paperless_Billing: Literal["Yes", "No"]
+
     Payment_Method: str
 
-    Monthly_Charges: float
-    Total_Charges: float
+    Monthly_Charges: float = Field(
+        ge=0
+    )
+
+    Total_Charges: float = Field(
+        ge=0
+    )
