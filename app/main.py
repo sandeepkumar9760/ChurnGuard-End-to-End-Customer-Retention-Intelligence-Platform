@@ -3,7 +3,7 @@ import mlflow.sklearn
 import pandas as pd
 
 from fastapi import FastAPI
-from app.schemas import CustomerData
+from app.schemas import CustomerData ,   PredictionResponse
 
 
 mlflow.set_tracking_uri(
@@ -49,7 +49,10 @@ def health():
     }
 
 
-@app.post("/predict")
+@app.post(
+    "/predict",
+    response_model=PredictionResponse
+)
 def predict(customer: CustomerData):
 
     customer_data = {

@@ -108,3 +108,26 @@ class CustomerData(BaseModel):
     Total_Charges: float = Field(
         ge=0
     )
+
+
+class PredictionResponse(BaseModel):
+
+    churn_probability: float = Field(
+        ge=0,
+        le=1
+    )
+
+    churn_prediction: Literal[
+        0,
+        1
+    ]
+
+    churn_label: Literal[
+        "No",
+        "Yes"
+    ]
+
+    threshold: float = Field(
+        ge=0,
+        le=1
+    )
