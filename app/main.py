@@ -1,5 +1,5 @@
 from http.client import HTTPException
-
+from pathlib import Path
 import mlflow
 import mlflow.sklearn
 import pandas as pd
@@ -26,17 +26,15 @@ app = FastAPI(
 
 
 # -----------------------------
-# MLflow Model
+# ML Model
 # -----------------------------
 
-RUN_ID = "2fe877028f9546c486abb5af4dd9163d"   #Your RUN_ID here
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-MODEL_URI = f"runs:/{RUN_ID}/telco_churn_model"
+MODEL_PATH = BASE_DIR / "model"
 
-model = mlflow.sklearn.load_model(MODEL_URI)
+model = mlflow.sklearn.load_model(MODEL_PATH)
 
-
-# Business decision threshold
 THRESHOLD = 0.35
 
 
