@@ -38,3 +38,26 @@ export interface PredictionResponse {
   churn_label: "No" | "Yes";
   threshold: number;
 }
+
+
+export interface PredictionRecord {
+  id: number;
+  customer: CustomerData;
+  churn_probability: number;
+  churn_prediction: 0 | 1;
+  churn_label: "No" | "Yes";
+  threshold: number;
+  contract: string;
+  tenure_months: number;
+  monthly_charges: number;
+  created_at: string;
+}
+
+export interface AnalyticsResponse {
+  prediction_count: number;
+  average_churn_probability: number;
+  high_risk_count: number;
+  high_risk_rate: number;
+  decision_threshold: number;
+  contract_distribution: Record<string, number>;
+}
