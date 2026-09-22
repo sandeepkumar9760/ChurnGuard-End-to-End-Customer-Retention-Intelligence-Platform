@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";\nimport type { CSSProperties, FormEvent, ReactNode } from "react";
 import { Activity, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, TrendingUp, Users, Wifi, Zap } from "lucide-react";
 import { checkHealth, predictChurn } from "./api";
 import type { CustomerData, PredictionResponse } from "./types";
@@ -46,7 +46,7 @@ function Field({ label, value, options, onChange }: { label: string; value: stri
   );
 }
 
-function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+function Section({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
     <section className="form-section">
       <div className="section-heading">
@@ -144,7 +144,7 @@ export default function App() {
               <div className="result-head"><div><p className="eyebrow">RISK ASSESSMENT</p><h2>Customer risk</h2></div><div className="icon-box"><Zap size={19} /></div></div>
               {result ? (
                 <>
-                  <div className={`risk-ring ${riskClass}`} style={{ "--risk": `${riskPercent * 3.6}deg` } as React.CSSProperties}><div><strong>{riskPercent.toFixed(1)}%</strong><span>churn probability</span></div></div>
+                  <div className={`risk-ring ${riskClass}`} style={{ "--risk": `${riskPercent * 3.6}deg` } as CSSProperties}><div><strong>{riskPercent.toFixed(1)}%</strong><span>churn probability</span></div></div>
                   <div className={`risk-badge ${riskClass}`}>{result.churn_label === "Yes" ? "Higher risk" : "Lower risk"}</div>
                   <p className="result-message">{riskMessage}</p>
                   <div className="metric-row"><span>Decision threshold</span><strong>{(result.threshold * 100).toFixed(0)}%</strong></div>
