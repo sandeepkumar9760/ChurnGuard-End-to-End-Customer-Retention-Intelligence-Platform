@@ -5,6 +5,7 @@ import pandas as pd
 import skops.io as sio
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import CustomerData, PredictionResponse
 
 
@@ -19,6 +20,28 @@ app = FastAPI(
     title="Telco Customer Churn Prediction API",
     description="Production-style API for predicting customer churn.",
     version="1.0.0"
+)
+
+
+# -----------------------------
+# CORS
+# -----------------------------
+
+CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 
