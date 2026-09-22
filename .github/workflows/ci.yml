@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run application tests
+        run: python -m pytest tests/test_api.py -q
+
+      - name: Build Docker image
+        run: docker build -t churnguard-api:ci .
+
+      - name: Start Docker container
+        run: |
+          docker run -d \
+            --name churnguard-api-ci \
+            -p 8000:8000 \
+            -e CHURN_THRESHOLD=0.35 \
+            churnguard-api:ci
+
+      - name: Wait for API health
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs churnguard-api-ci
+          exit 1
+
+      - name: Run container integration tests
+        run: python -m pytest tests/test_container_api.py -q
+
+      - name: Show container logs
+        if: always()
+        run: docker logs churnguard-api-ci
+
+      - name: Cleanup container
+        if: always()
+        run: docker rm -f churnguard-api-ci || true
