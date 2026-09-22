@@ -13,17 +13,10 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
-import { checkHealth, predictChurn } from "./api";
-import type { CustomerData, PredictionResponse } from "./types";
+import { checkHealth, getAnalytics, getPredictions, predictChurn } from "./api";
+import type { AnalyticsResponse, CustomerData, PredictionRecord, PredictionResponse } from "./types";
 
 type View = "prediction" | "analytics" | "customers";
-
-type HistoryItem = {
-  id: string;
-  createdAt: string;
-  customer: CustomerData;
-  result: PredictionResponse;
-};
 
 const defaults: CustomerData = {
   Gender: "Male",
@@ -131,16 +124,10 @@ function StatCard({
   );
 }
 
-function AnalyticsView({ history }: { history: HistoryItem[] }) {
-  const average = history.length
-    ? history.reduce((sum, item) => sum + item.result.churn_probability, 0) / history.length
-    : 0;
-  const highRisk = history.filter((item) => item.result.churn_prediction === 1).length;
-  const highRiskRate = history.length ? (highRisk / history.length) * 100 : 0;
-
+function AnalyticsView({ history, analytics }: { history: PredictionRecord[]; analytics: AnalyticsResponse | null }) {
   const contracts = ["Month-to-month", "One year", "Two year"].map((contract) => ({
     contract,
-    count: history.filter((item) => item.customer.Contract === contract).length,
+    count: analytics?.contract_distribution[contract] ?? 0,
   }));
   const maxContract = Math.max(...contracts.map((item) => item.count), 1);
 
@@ -150,16 +137,16 @@ function AnalyticsView({ history }: { history: HistoryItem[] }) {
         <div>
           <p className="eyebrow">PORTFOLIO ANALYTICS</p>
           <h1>Prediction analytics.</h1>
-          <p className="lead">Operational metrics calculated from predictions saved in this browser.</p>
+          <p className="lead">Operational metrics calculated from predictions persisted by the production API.</p>
         </div>
-        <div className="local-badge"><Clock3 size={15} /> Local prediction history</div>
+        <div className="local-badge"><Clock3 size={15} /> PostgreSQL-backed history</div>
       </div>
 
       <div className="stats-grid">
-        <StatCard label="Predictions" value={String(history.length)} detail="Saved prediction runs" icon={<BarChart3 size={18} />} />
-        <StatCard label="Avg. churn probability" value={`${(average * 100).toFixed(1)}%`} detail="Across saved predictions" icon={<TrendingUp size={18} />} />
-        <StatCard label="Higher-risk decisions" value={String(highRisk)} detail={`${highRiskRate.toFixed(1)}% of predictions`} icon={<Zap size={18} />} />
-        <StatCard label="Decision threshold" value={history.length ? `${(history[0].result.threshold * 100).toFixed(0)}%` : "35%"} detail="Configured model threshold" icon={<ShieldCheck size={18} />} />
+        <StatCard label="Predictions" value={String(analytics?.prediction_count ?? 0)} detail="Saved prediction runs" icon={<BarChart3 size={18} />} />
+        <StatCard label="Avg. churn probability" value={`${((analytics?.average_churn_probability ?? 0) * 100).toFixed(1)}%`} detail="Across saved predictions" icon={<TrendingUp size={18} />} />
+        <StatCard label="Higher-risk decisions" value={String(analytics?.high_risk_count ?? 0)} detail={`${((analytics?.high_risk_rate ?? 0) * 100).toFixed(1)}% of predictions`} icon={<Zap size={18} />} />
+        <StatCard label="Decision threshold" value={`${((analytics?.decision_threshold ?? 0.35) * 100).toFixed(0)}%`} detail="Configured model threshold" icon={<ShieldCheck size={18} />} />
       </div>
 
       <div className="analytics-grid">
@@ -183,9 +170,9 @@ function AnalyticsView({ history }: { history: HistoryItem[] }) {
           </div>
           {history.length ? history.slice(0, 5).map((item) => (
             <div className="activity-row" key={item.id}>
-              <span className={item.result.churn_prediction ? "status-dot high" : "status-dot low"} />
+              <span className={item.churn_prediction ? "status-dot high" : "status-dot low"} />
               <div><strong>{item.id}</strong><small>{item.customer.Contract} · {item.customer.Tenure_Months} months</small></div>
-              <b>{(item.result.churn_probability * 100).toFixed(1)}%</b>
+              <b>{(item.churn_probability * 100).toFixed(1)}%</b>
             </div>
           )) : <EmptyState title="Nothing recorded" text="Your recent model runs will appear here." />}
         </section>
@@ -193,7 +180,7 @@ function AnalyticsView({ history }: { history: HistoryItem[] }) {
 
       <div className="disclaimer-card">
         <ShieldCheck size={18} />
-        <div><strong>Analytics scope</strong><p>These metrics summarize predictions generated through this browser session. They are not a live view of the telecom customer database.</p></div>
+        <div><strong>Analytics scope</strong><p>These metrics summarize predictions persisted by the ChurnGuard API in PostgreSQL. They are not a live view of the telecom customer database.</p></div>
       </div>
     </div>
   );
@@ -203,7 +190,7 @@ function CustomersView({
   history,
   onNewPrediction,
 }: {
-  history: HistoryItem[];
+  history: PredictionRecord[];
   onNewPrediction: () => void;
 }) {
   return (
@@ -218,7 +205,7 @@ function CustomersView({
       </div>
 
       <section className="table-panel">
-        <div className="table-toolbar"><div><strong>{history.length} saved profiles</strong><span>Stored locally in this browser</span></div></div>
+        <div className="table-toolbar"><div><strong>{history.length} saved profiles</strong><span>Stored in production PostgreSQL</span></div></div>
         {history.length ? (
           <div className="table-wrap">
             <table>
@@ -230,14 +217,14 @@ function CustomersView({
                     <td>{item.customer.Contract}</td>
                     <td>{item.customer.Tenure_Months} mo</td>
                     <td>₹{item.customer.Monthly_Charges.toFixed(2)}</td>
-                    <td><strong>{(item.result.churn_probability * 100).toFixed(1)}%</strong></td>
-                    <td><span className={`table-status ${item.result.churn_prediction ? "high" : "low"}`}>{item.result.churn_prediction ? "Churn" : "No churn"}</span></td>
+                    <td><strong>{(item.churn_probability * 100).toFixed(1)}%</strong></td>
+                    <td><span className={`table-status ${item.churn_prediction ? "high" : "low"}`}>{item.churn_prediction ? "Churn" : "No churn"}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : <EmptyState title="No customer predictions yet" text="Generate your first prediction to create a local customer record." />}
+        ) : <EmptyState title="No customer predictions yet" text="Generate your first prediction to create a persistent customer record." />}
       </section>
     </div>
   );
@@ -251,22 +238,43 @@ export default function App() {
   const [view, setView] = useState<View>("prediction");
   const [customer, setCustomer] = useState<CustomerData>(defaults);
   const [result, setResult] = useState<PredictionResponse | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("churnguard-history") ?? "[]") as HistoryItem[];
-    } catch {
-      return [];
-    }
-  });
+  const [history, setHistory] = useState<PredictionRecord[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => { checkHealth().then(setApiOnline); }, []);
-
   useEffect(() => {
-    localStorage.setItem("churnguard-history", JSON.stringify(history.slice(0, 50)));
-  }, [history]);
+    async function loadWorkspace() {
+      setDataLoading(true);
+      const online = await checkHealth();
+      setApiOnline(online);
+      if (online) {
+        try {
+          const [predictions, analyticsData] = await Promise.all([
+            getPredictions(),
+            getAnalytics(),
+          ]);
+          setHistory(predictions);
+          setAnalytics(analyticsData);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Unable to load persisted prediction data.");
+        }
+      }
+      setDataLoading(false);
+    }
+    void loadWorkspace();
+  }, []);
+
+  async function refreshWorkspace() {
+    const [predictions, analyticsData] = await Promise.all([
+      getPredictions(),
+      getAnalytics(),
+    ]);
+    setHistory(predictions);
+    setAnalytics(analyticsData);
+  }
 
   const riskPercent = result ? result.churn_probability * 100 : 0;
   const riskClass = result && riskPercent >= result.threshold * 100 ? "high" : "low";
@@ -289,15 +297,7 @@ export default function App() {
     try {
       const prediction = await predictChurn(customer);
       setResult(prediction);
-      setHistory((current) => [
-        {
-          id: `CG-${String(current.length + 1).padStart(3, "0")}`,
-          createdAt: new Date().toISOString(),
-          customer,
-          result: prediction,
-        },
-        ...current,
-      ].slice(0, 50));
+      await refreshWorkspace();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to reach the prediction service.");
     } finally {
@@ -383,9 +383,17 @@ export default function App() {
             </div>
           </>
         ) : view === "analytics" ? (
-          <AnalyticsView history={history} />
+          dataLoading ? (
+            <div className="page-stack"><div className="empty-page"><div className="empty-icon"><Activity size={20} /></div><h3>Loading analytics</h3><p>Fetching persisted prediction data from PostgreSQL.</p></div></div>
+          ) : (
+            <AnalyticsView history={history} analytics={analytics} />
+          )
         ) : (
-          <CustomersView history={history} onNewPrediction={() => navigate("prediction")} />
+          dataLoading ? (
+            <div className="page-stack"><div className="empty-page"><div className="empty-icon"><Users size={20} /></div><h3>Loading customers</h3><p>Fetching persisted prediction history from PostgreSQL.</p></div></div>
+          ) : (
+            <CustomersView history={history} onNewPrediction={() => navigate("prediction")} />
+          )
         )}
       </main>
     </div>
