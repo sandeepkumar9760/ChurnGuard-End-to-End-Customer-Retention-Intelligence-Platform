@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";\nimport type { CSSProperties, FormEvent, ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties, FormEvent, ReactNode } from "react";
 import { Activity, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, TrendingUp, Users, Wifi, Zap } from "lucide-react";
 import { checkHealth, predictChurn } from "./api";
 import type { CustomerData, PredictionResponse } from "./types";
