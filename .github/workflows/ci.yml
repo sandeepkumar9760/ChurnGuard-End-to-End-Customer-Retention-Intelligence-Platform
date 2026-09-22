@@ -24,13 +24,28 @@ jobs:
           cache: pip
           cache-dependency-path: requirements-dev.txt
 
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
 
       - name: Run application tests
         run: python -m pytest tests/test_api.py -q
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
 
       - name: Build Docker image
         run: docker build -t churnguard-api:ci .
@@ -51,7 +66,7 @@ jobs:
             fi
             sleep 2
           done
-          docker logs churnguard-api-ci
+          docker logs churnguard-api-ci || true
           exit 1
 
       - name: Run container integration tests
@@ -59,7 +74,7 @@ jobs:
 
       - name: Show container logs
         if: always()
-        run: docker logs churnguard-api-ci
+        run: docker logs churnguard-api-ci || true
 
       - name: Cleanup container
         if: always()
