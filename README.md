@@ -13,13 +13,15 @@
 
 ## 🚀 Live Deployment
 
+**Production Frontend:** https://churnguard-indol.vercel.app
+
 **Production API:** https://churnguard-api-mqod.onrender.com/
 
 **Interactive Swagger documentation:** https://churnguard-api-mqod.onrender.com/docs
 
 **Health check:** https://churnguard-api-mqod.onrender.com/health
 
-The production service is deployed as a Render Web Service and loads the versioned `model/model.skops` artifact directly at application startup.
+The production service is deployed as a Render Web Service and loads the versioned `model/model.skops` artifact directly at application startup. The React/Vite frontend is deployed separately on Vercel and communicates with the API over HTTPS.
 
 ---
 
@@ -29,7 +31,7 @@ The production service is deployed as a Render Web Service and loads the version
 
 The project takes telecom customer data through the complete ML lifecycle:
 
-**Data → EDA → Preprocessing → Model Comparison → Hyperparameter Tuning → Threshold Evaluation → SHAP Explainability → MLflow Tracking → Model Serialization → FastAPI → Docker → Automated Testing → Render Deployment**
+**Data → EDA → Preprocessing → Model Comparison → Hyperparameter Tuning → Threshold Evaluation → SHAP Explainability → MLflow Tracking → Model Serialization → FastAPI → PostgreSQL → React/Vite Frontend → Docker → Automated Testing → Vercel + Render Deployment**
 
 The inference service exposes a validated HTTP API that returns both a churn probability and a binary decision based on a configurable classification threshold.
 
@@ -57,76 +59,61 @@ Customer churn is a major business challenge in the telecom industry. ChurnGuard
 # 🏗️ End-to-End Architecture
 
 ```text
-                         ┌──────────────────────────┐
-                         │     Telecom Dataset      │
-                         │       7,043 rows         │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ EDA + Data Cleaning      │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ Feature Selection &      │
-                         │ Preprocessing             │
-                         └────────────┬─────────────┘
-                                      │
-                 ┌────────────────────┼────────────────────┐
-                 │                    │                    │
-                 ▼                    ▼                    ▼
-          Logistic Regression   Random Forest      Gradient Boosting
-                 │                    │                    │
-                 └────────────────────┼────────────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ Cross-Validation &       │
-                         │ Model Evaluation         │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ Hyperparameter Tuning    │
-                         │ RandomizedSearchCV       │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ Threshold Evaluation     │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ SHAP Explainability      │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ MLflow Experiment        │
-                         │ Tracking                  │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                         ┌──────────────────────────┐
-                         │ model/model.skops        │
-                         └────────────┬─────────────┘
-                                      │
-                                      ▼
-                  ┌─────────────────────────────────────────┐
-                  │              FastAPI Service             │
-                  │  GET /  |  GET /health  |  POST /predict│
-                  └────────────────────┬────────────────────┘
-                                       │
-                         ┌─────────────▼──────────────┐
-                         │ Docker / Render Deployment │
-                         │ Health Check + HTTPS       │
-                         └────────────────────────────┘
+                    ┌──────────────────────────┐
+                    │     Telecom Dataset      │
+                    │       7,043 rows         │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │ EDA + Data Cleaning      │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │ Feature Selection &      │
+                    │ Preprocessing            │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │ Model Comparison + CV    │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │ Tuning + Threshold       │
+                    │ Evaluation + SHAP        │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+                    ┌──────────────────────────┐
+                    │ MLflow + model.skops     │
+                    └────────────┬─────────────┘
+                                 │
+                                 ▼
+             ┌─────────────────────────────────────┐
+             │            FastAPI Backend           │
+             │ /predict /predictions /analytics    │
+             │ /health                              │
+             └───────────────┬─────────────────────┘
+                             │
+                 ┌───────────┴───────────┐
+                 ▼                       ▼
+        ┌──────────────────┐    ┌──────────────────┐
+        │    PostgreSQL    │    │ Docker / Render  │
+        │ Persistent data  │    │ API deployment   │
+        └──────────────────┘    └──────────────────┘
+                 ▲
+                 │ HTTPS
+                 │
+        ┌────────┴─────────────┐
+        │ React + TypeScript   │
+        │ Vite / Vercel       │
+        └─────────────────────┘
 ```
 
 ---
-
 # 📊 Dataset
 
 The project uses a telecom customer churn dataset containing **7,043 customer records**.
@@ -444,6 +431,37 @@ The production environment pins these core ML dependencies to maintain compatibi
 
 ---
 
+# 🗄️ Production Persistence & Analytics
+
+Prediction results are persisted in PostgreSQL through SQLAlchemy.
+
+### Persisted prediction data
+
+Each record stores:
+
+- customer input profile as JSON
+- churn probability
+- binary churn prediction
+- churn label
+- decision threshold
+- contract
+- tenure
+- monthly charges
+- creation timestamp
+
+### Backend data APIs
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/predictions` | Latest persisted prediction history |
+| GET | `/analytics` | Aggregate prediction analytics |
+
+The frontend uses these backend APIs as the source of truth for the **Customers** and **Analytics** workspaces. Browser `localStorage` is not used as the primary prediction store.
+
+The initial database schema is created from SQLAlchemy metadata at application startup. Alembic migrations are planned as a future hardening step.
+
+---
+
 # 🚀 FastAPI Inference API
 
 The model is exposed through FastAPI with Pydantic request validation.
@@ -453,8 +471,10 @@ The model is exposed through FastAPI with Pydantic request validation.
 | Method | Endpoint | Purpose |
 |---|---|---|
 | GET | `/` | API status |
-| GET | `/health` | Application/model health |
-| POST | `/predict` | Churn prediction |
+| GET | `/health` | Application, model, and database health |
+| POST | `/predict` | Churn prediction and persistence |
+| GET | `/predictions` | Persisted prediction history |
+| GET | `/analytics` | Prediction analytics |
 
 ### `GET /health`
 
@@ -463,7 +483,9 @@ Example:
 ```json
 {
   "status": "healthy",
-  "model_loaded": true
+  "model_loaded": true,
+  "database_connected": true,
+  "persistence_enabled": true
 }
 ```
 
@@ -518,7 +540,61 @@ The exact probability depends on the supplied customer features.
 
 ---
 
+# 🖥️ Production Frontend
+
+The project includes a responsive React + TypeScript + Vite frontend deployed on Vercel.
+
+**Live application:** https://churnguard-indol.vercel.app
+
+### Frontend capabilities
+
+- Customer churn prediction form
+- Production API health indicator
+- Churn probability visualization
+- Configurable decision-threshold display
+- Risk classification
+- PostgreSQL-backed prediction history
+- Customers workspace
+- Analytics workspace
+- Contract distribution analytics
+- Recent prediction activity
+- Loading and API error states
+- Responsive layout
+
+### Frontend stack
+
+```text
+React 19
+TypeScript
+Vite
+Recharts
+Lucide React
+```
+
+The production API URL is configured through:
+
+```text
+VITE_API_BASE_URL=https://churnguard-api-mqod.onrender.com
+```
+
+---
+
 # 🌐 Production Deployment
+
+ChurnGuard uses separate production deployments for the frontend and backend.
+
+### Frontend — Vercel
+
+```text
+Framework: Vite
+Root Directory: frontend
+Build Command: npm run build
+Output Directory: dist
+```
+
+Live frontend: https://churnguard-indol.vercel.app
+
+### Backend — Render
 
 ChurnGuard is deployed on **Render** as a Python Web Service.
 
@@ -646,25 +722,27 @@ ChurnGuard-End-to-End-Customer-Retention-Intelligence-Platform/
 │
 ├── app/
 │   ├── __init__.py
+│   ├── db.py
 │   ├── main.py
 │   └── schemas.py
 │
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── api.ts
+│   │   ├── main.tsx
+│   │   ├── styles.css
+│   │   └── types.ts
+│   ├── index.html
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── tsconfig.app.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+│
 ├── model/
-│   ├── MLmodel
-│   ├── model.skops
-│   ├── conda.yaml
-│   ├── python_env.yaml
-│   ├── registered_model_meta
-│   └── requirements.txt
-│
 ├── notebooks/
-│   └── 01_Telco_churn.ipynb
-│
 ├── tests/
-│   ├── __init__.py
-│   ├── test_api.py
-│   └── test_container_api.py
-│
 ├── .dockerignore
 ├── .gitignore
 ├── .python-version
@@ -674,7 +752,6 @@ ChurnGuard-End-to-End-Customer-Retention-Intelligence-Platform/
 ```
 
 ---
-
 # 🛠️ Tech Stack
 
 | Layer | Technology |
@@ -688,9 +765,16 @@ ChurnGuard-End-to-End-Customer-Retention-Intelligence-Platform/
 | API | FastAPI 0.141.1 |
 | Validation | Pydantic 2.13.5 |
 | Server | Uvicorn 0.53.0 |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy 2.0.43 |
+| Database Driver | Psycopg 3.2.9 |
+| Frontend | React 19 + TypeScript |
+| Frontend Build | Vite |
+| Charts | Recharts |
+| Icons | Lucide React |
 | Testing | Pytest |
 | Containerization | Docker |
-| Cloud Deployment | Render |
+| Cloud Deployment | Vercel + Render |
 
 ---
 
@@ -760,6 +844,7 @@ Considerations include:
 - production deployments require model and data monitoring
 - customer-level data should be handled according to applicable privacy and governance requirements
 - automated retraining and model promotion are not yet implemented
+- database migrations are not yet implemented
 - the current API does not include authentication or rate limiting
 
 ---
@@ -770,7 +855,12 @@ Considerations include:
 - [ ] Automated model registry and promotion
 - [ ] Data drift monitoring
 - [ ] Model performance monitoring
-- [ ] Prediction logging
+- [x] PostgreSQL prediction persistence
+- [x] Persistent customer prediction history
+- [x] Production analytics API
+- [x] React/Vite customer-risk dashboard
+- [x] Vercel frontend deployment
+- [ ] Alembic database migrations
 - [ ] Automated retraining
 - [ ] Prometheus metrics
 - [ ] Centralized logging
@@ -812,7 +902,11 @@ B.Tech CSE — Decision Science & Machine Learning
 - FastAPI inference service
 - Pydantic validation
 - Docker containerization
-- Render production deployment
+- Render production API deployment
+- Vercel production frontend deployment
+- PostgreSQL prediction persistence
+- Backend-driven analytics
+- Persistent customer prediction history
 - Pinned model-serving dependencies
 - Docker healthcheck
 - Environment-based threshold configuration
